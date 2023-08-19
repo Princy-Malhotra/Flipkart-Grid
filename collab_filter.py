@@ -19,12 +19,14 @@ def collab_filter(favMovies):
     favMovies = tempMovies
 
     ratings = ra
-
     user_ratings = ratings.pivot_table(index=['userId'], columns=[
-        'productId'], values='rating')
+                                       'productId'], values='rating')
 
-    # removing Nans, by removing movies with less than 10 ratings
-    user_ratings = user_ratings.dropna(thresh=10, axis=1).fillna(0)
+    print('lol')
+    print(user_ratings)
+    # removing Nans, by removing movies with less than 10 ratings1
+    user_ratings = user_ratings.fillna(0)
+    print(user_ratings)
 
     # using inbuilt pierson correlation
     global item_similiary_df
@@ -43,10 +45,7 @@ def collab_filter(favMovies):
 
     similiar_movies.sum().sort_values(ascending=False)
     print(similiar_movies)
-
     return similiar_movies
 
 
-
-
-print(collab_filter([('CEDO 65W OnePlus Dash Warp Charge Cable, USB A to Type C Data Sync Fast Charging Cable Compatible with One Plus 3 /3T /5 /5T /6 /6T /7 /7T /7 pro & for All Type C Devices - 1 Meter, Red', 71,2)]))
+print(collab_filter([("Wayona Nylon Braided USB to Lightning Fast Charging and Data Sync Cable Compatible for iPhone 13, 12,11, X, 8, 7, 6, 5, iPad Air, Pro, Mini (3 FT Pack of 1, Grey)", 0, 2)]))
