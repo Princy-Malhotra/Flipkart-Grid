@@ -19,6 +19,7 @@ import pandas as pd
 from ast import literal_eval
 from scrollableLabel import scrollLabel
 
+
 # with open("mydata.json", encoding="utf8") as f:
 #     data = literal_eval(f.read())
 # i = 0
