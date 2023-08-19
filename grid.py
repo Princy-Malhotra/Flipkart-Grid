@@ -8,6 +8,7 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import QSize
 import requests
 from searchFunctions import searchQuery
 import content_based
@@ -51,6 +52,9 @@ class Ui_MainWindow(object):
         self.listWidget.setGeometry(QtCore.QRect(-5, 1, 761, 471))
         self.listWidget.setObjectName("listWidget")
         self.listWidget.itemDoubleClicked.connect(self.showProduct)
+        self.listWidget.setWordWrap(True)
+        size = QSize()
+        size.setHeight(100)
 
         self.resultsScollArea.setWidget(self.scrollAreaWidgetContents)
         global initial
@@ -62,7 +66,7 @@ class Ui_MainWindow(object):
         initial = 0
 
         self.searchButton = QtWidgets.QPushButton(self.centralwidget)
-        self.searchButton.setGeometry(QtCore.QRect(710, 40, 75, 24))
+        self.searchButton.setGeometry(QtCore.QRect(710, 40, 81, 31))
         self.searchButton.setObjectName("searchButton")
         self.searchButton.clicked.connect(self.submitSearch)
 
@@ -112,9 +116,15 @@ class Ui_MainWindow(object):
             if i > 50:
                 break
             id = self.searchResults['index'][ind]
-            name = self.searchResults['product_name'][ind]
+            name = self.searchResults['product_name'][ind] + '\n\n' + \
+                self.searchResults['discounted_price'][ind] + \
+                '\n\n' + 'Average Rating : ' + \
+                str(self.searchResults['rating'][ind])
+            name = name.replace('\u20b9', 'Rs. ')
             print(name)
-            listWidgetItem = QListWidgetItem(name)
+            icon = QIcon('placeholder.png')
+            listWidgetItem = QListWidgetItem(icon, name)
+
             self.listWidget.addItem(listWidgetItem)
             self.search_index_map[i] = id
             i += 1
@@ -159,10 +169,8 @@ class ProductWindow(QWidget):
         self.productImageLabel.setGeometry(QtCore.QRect(40, 70, 321, 211))
         self.productImageLabel.setText("")
         self.productImageLabel.setObjectName("productImageLabel")
-        # image = QImage()
-        # print(df['image_link'][id])
-        # image.loadFromData(requests.get(df['image_link'][id]).content)
-        # self.productImageLabel.setPixmap(QPixmap(image))\
+
+        self.productImageLabel.setPixmap(QPixmap('placeholder.png'))
         print('lol')
         print(df['product_name'][id])
         self.productLabel = QtWidgets.QTextBrowser(self.centralwidget)
