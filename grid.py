@@ -21,11 +21,16 @@ from PyQt5.QtGui import QPixmap, QIcon, QImage
 import urllib
 
 
+user_favs = []
+initial = 1
+
+
 class Ui_MainWindow(object):
 
     def setupUi(self, MainWindow):
         self.selected_product = -1
         self.searchText = ''
+
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(800, 600)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
@@ -46,7 +51,16 @@ class Ui_MainWindow(object):
         self.listWidget.setGeometry(QtCore.QRect(-5, 1, 761, 471))
         self.listWidget.setObjectName("listWidget")
         self.listWidget.itemDoubleClicked.connect(self.showProduct)
+
         self.resultsScollArea.setWidget(self.scrollAreaWidgetContents)
+        global initial
+        global user_favs
+        if initial == 1 or len(user_favs) < 1:
+            self.submitSearch()
+        else:
+            self.fetchCollab()
+        initial = 0
+
         self.searchButton = QtWidgets.QPushButton(self.centralwidget)
         self.searchButton.setGeometry(QtCore.QRect(710, 40, 75, 24))
         self.searchButton.setObjectName("searchButton")
@@ -65,6 +79,23 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(_translate(
             "MainWindow", "Product Recommender"))
         self.searchButton.setText(_translate("MainWindow", "Search"))
+
+    def fetchCollab(self):
+        self.search_index_map = {}
+        collab_results = collab_filter(user_favs)
+        self.listWidget.clear()
+        i = 0
+
+        for column in collab_results.columns:
+            if i > 50:
+                break
+            if column == 'productId':
+                continue
+            ind = int(column)
+            self.listWidget.addItem(
+                QListWidgetItem(df['product_name'][ind]))
+            self.search_index_map[i] = id
+            i += 1
 
     def searchTermUpdate(self):
         self.searchText = self.textEdit.toPlainText()
@@ -115,6 +146,7 @@ class ProductWindow(QWidget):
     def setupUi(self, MainWindow, id, content_results, collab_results):
         self.content_results = content_results
         self.collab_results = collab_results
+        self.id = id
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(800, 600)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
@@ -161,6 +193,11 @@ class ProductWindow(QWidget):
         self.collabBasedList.setObjectName("collabBasedList")
         self.populateContent(id)
         self.populateCollab(id)
+        self.buyButton = QtWidgets  .QPushButton(self.centralwidget)
+        self.buyButton.setObjectName(u"buyButton")
+        self.buyButton.setGeometry(QtCore.QRect(310, 280, 75, 24))
+        self.buyButton.clicked.connect(self.addToFav)
+        self.buyButton.setText('Buy')
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -180,6 +217,15 @@ class ProductWindow(QWidget):
     def go_back(self):
 
         ui.setupUi(MainWindow)
+
+    def addToFav(self):
+        global user_favs
+        id = self.id
+        rating = 3
+        name = df['product_name'][id]
+        tupel = (name, id, rating)
+        if tupel not in user_favs:
+            user_favs.append(tupel)
 
     def populateContent(self, id):
         # (name, index)
