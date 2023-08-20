@@ -79,11 +79,7 @@ class Ui_MainWindow(object):
         self.resultsScollArea.setWidget(self.scrollAreaWidgetContents)
         global initial
         global user_favs
-        if initial == 1 or len(user_favs) < 1:
-            self.submitSearch()
-        else:
-            self.fetchCollab()
-        initial = 0
+        
 
         self.sortButton = QtWidgets.QPushButton(self.centralwidget)
         self.sortButton.setObjectName("sortButton")
@@ -106,6 +102,11 @@ class Ui_MainWindow(object):
         self.searchButton.clicked.connect(self.submitSearch)
 
         
+        if initial == 1 or len(user_favs) < 1:
+            self.submitSearch()
+        else:
+            self.fetchCollab()
+        initial = 0
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
@@ -138,8 +139,14 @@ class Ui_MainWindow(object):
                 continue
             ind = int(column)
             self.search_list.append(ind)
-            self.listWidget.addItem(
-                QListWidgetItem(df['product_name'][ind]))
+            name = df['product_name'][ind] + '\n\n' + df['discounted_price'][ind] + '\n\n' + 'Average Rating : ' + str(df['rating'][ind])
+            name = name.replace('\u20b9', 'Rs. ')
+            
+            icon = QIcon('placeholder.png')
+            listWidgetItem = QListWidgetItem(icon, name)
+
+            self.listWidget.addItem(listWidgetItem)
+            
             self.search_index_map[i] = id
             i += 1
     def clearAllButton(self):
@@ -287,8 +294,8 @@ class Ui_MainWindow(object):
             global user_favs
             #name, id, rating
             
-            if (df['product_name'][id], id, 5) not in user_favs:
-                user_favs.append([(df['product_name'][id], id, 2)])
+            if (df['product_name'][id], id, 3) not in user_favs:
+                user_favs.append((df['product_name'][id], id, 3))
 
             self.p_window = ProductWindow()
             self.p_window.setupUi(
@@ -409,14 +416,14 @@ class ProductWindow(QWidget):
     def addToFav(self):
         global user_favs
         id = self.id
-        rating = 3
+        rating = 4
         name = df['product_name'][id]
         tupel = (name, id, rating)
-        if tupel not in user_favs and (df['product_name'][id], id, 2) not in user_favs:
+        if tupel not in user_favs and (df['product_name'][id], id, 3) not in user_favs:
             user_favs.append(tupel)
-        elif (df['product_name'][id], id, 2) in user_favs:
-            loc = user_favs.index((df['product_name'][id], id, 2))
-            user_favs[loc]=(df['product_name'][id], id, 3)
+        elif (df['product_name'][id], id, 3) in user_favs:
+            loc = user_favs.index((df['product_name'][id], id, 3))
+            user_favs[loc]=(df['product_name'][id], id, 4)
             
 
     def populateContent(self, id):

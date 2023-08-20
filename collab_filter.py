@@ -24,7 +24,7 @@ def collab_filter(favMovies):
 
     print('lol')
     print(user_ratings)
-    # removing Nans, by removing movies with less than 10 ratings1
+    # removing Nans
     user_ratings = user_ratings.fillna(0)
     print(user_ratings)
 
