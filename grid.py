@@ -378,9 +378,11 @@ class ProductWindow(QWidget):
         delegate = CustomItemDelegate()
         self.contentBasedList.setItemDelegate(delegate)
         self.contentBasedList.setIconSize(QSize(100, 100))
+        self.contentBasedList.itemDoubleClicked.connect(self.showProductContent)
 
         self.collabBasedList = QtWidgets.QListWidget(self.centralwidget)
         self.collabBasedList.setGeometry(QtCore.QRect(430, 400, 321, 171))
+        self.collabBasedList.itemDoubleClicked.connect(self.showProductCollab)
 
         # self.collabBasedList.setFlow(QtWidgets.QListView.TopToBottom)
         self.collabBasedList.setObjectName("collabBasedList")
@@ -428,9 +430,48 @@ class ProductWindow(QWidget):
             loc = user_favs.index((df['product_name'][id], id, 3))
             user_favs[loc]=(df['product_name'][id], id, 4)
             
+    def showProductContent(self):
+        if self.contentBasedList.currentRow() >= 0:
 
+            id = self.content_index_map[self.contentBasedList.currentRow()]
+
+            self.selected_product = id
+            content_results = content_rec(df['product_name'][id])
+            collab_results = collab_filter([(df['product_name'][id], id, 5)])
+            global user_favs
+            #name, id, rating
+            
+            if (df['product_name'][id], id, 3) not in user_favs:
+                user_favs.append((df['product_name'][id], id, 3))
+
+            self.p_window = ProductWindow()
+            self.p_window.setupUi(
+                MainWindow, id, content_results, collab_results)
+
+            print('lol')
+    def showProductCollab(self):
+        if self.collabBasedList.currentRow() >= 0:
+
+            id = self.collab_index_map[self.collabBasedList.currentRow()]
+
+            self.selected_product = id
+            content_results = content_rec(df['product_name'][id])
+            collab_results = collab_filter([(df['product_name'][id], id, 5)])
+            global user_favs
+            #name, id, rating
+            
+            if (df['product_name'][id], id, 3) not in user_favs:
+                user_favs.append((df['product_name'][id], id, 3))
+
+            self.p_window = ProductWindow()
+            self.p_window.setupUi(
+                MainWindow, id, content_results, collab_results)
+
+            print('lol')
     def populateContent(self, id):
         # (name, index)
+        self.content_index_map={}
+        i=0
         for name, ind in self.content_results:
             if ind == id:
                 continue
@@ -438,8 +479,12 @@ class ProductWindow(QWidget):
 
             listWidgetItem = QListWidgetItem(icon, name)
             self.contentBasedList.addItem(listWidgetItem)
+            self.content_index_map[i]=ind
+            i+=1
 
     def populateCollab(self, id):
+        self.collab_index_map={}
+        i=0
         for column in self.collab_results.columns:
             if column == 'productId':
                 continue
@@ -449,7 +494,9 @@ class ProductWindow(QWidget):
             icon = QIcon('placeholder.png')
             name = df['product_name'][ind]
             listWidgetItem = QListWidgetItem(icon, name)
+            self.collab_index_map[i]=ind
             self.collabBasedList.addItem(listWidgetItem)
+            i+=1
 
 
 if __name__ == "__main__":
