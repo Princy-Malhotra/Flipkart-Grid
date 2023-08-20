@@ -169,6 +169,7 @@ class Ui_MainWindow(object):
 
         self.search_index_map = {}
         self.search_list=[]
+        i=0
         for ps, ind in sorted_rating_ind:
             self.search_list.append(ind)
             name = df['product_name'][ind] + '\n\n' + df['discounted_price'][ind] + '\n\n' + 'Average Rating : ' + str(df['rating'][ind])
@@ -197,6 +198,7 @@ class Ui_MainWindow(object):
 
         self.search_index_map = {}
         self.search_list=[]
+        i=0
         for ps, ind in sorted_rating_ind:
             self.search_list.append(ind)
             name = df['product_name'][ind] + '\n\n' + df['discounted_price'][ind] + '\n\n' + 'Average Rating : ' + str(df['rating'][ind])
@@ -237,6 +239,7 @@ class Ui_MainWindow(object):
 
         self.search_index_map = {}
         self.search_list=[]
+        i=0
         for ps, ind in sorted_rating_ind:
             self.search_list.append(ind)
             name = df['product_name'][ind] + '\n\n' + df['discounted_price'][ind] + '\n\n' + 'Average Rating : ' + str(df['rating'][ind])
