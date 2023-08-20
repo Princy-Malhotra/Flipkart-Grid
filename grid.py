@@ -55,7 +55,7 @@ class Ui_MainWindow(object):
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.textEdit = QtWidgets.QTextEdit(self.centralwidget)
-        self.textEdit.setGeometry(QtCore.QRect(20, 40, 681, 31))
+        self.textEdit.setGeometry(QtCore.QRect(20, 20, 681, 31))
         self.textEdit.setObjectName("textEdit")
         self.textEdit.setPlaceholderText("Search Product")
         self.textEdit.textChanged.connect(self.searchTermUpdate)
@@ -85,10 +85,27 @@ class Ui_MainWindow(object):
             self.fetchCollab()
         initial = 0
 
+        self.sortButton = QtWidgets.QPushButton(self.centralwidget)
+        self.sortButton.setObjectName("sortButton")
+        self.sortButton.setGeometry(QtCore.QRect(650, 60, 141, 31))
+        self.sortButton.clicked.connect(self.sortPopularity)
+
+        self.sortButtonLH = QtWidgets.QPushButton(self.centralwidget)
+        self.sortButtonLH.setObjectName("sortButtonLH")
+        self.sortButtonLH.clicked.connect(self.sortLH)
+        
+        self.sortButtonLH.setGeometry(QtCore.QRect(330, 60, 151, 31))
+        self.sortButtonHL = QtWidgets.QPushButton(self.centralwidget)
+        self.sortButtonHL.setObjectName("sortButtonHL")
+        self.sortButtonHL.setGeometry(QtCore.QRect(490, 60, 151, 31))
+        self.sortButtonHL.clicked.connect(self.sortHL)
+
         self.searchButton = QtWidgets.QPushButton(self.centralwidget)
-        self.searchButton.setGeometry(QtCore.QRect(710, 40, 81, 31))
+        self.searchButton.setGeometry(QtCore.QRect(710, 20, 81, 31))
         self.searchButton.setObjectName("searchButton")
         self.searchButton.clicked.connect(self.submitSearch)
+
+        
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
@@ -103,9 +120,13 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(_translate(
             "MainWindow", "Product Recommender"))
         self.searchButton.setText(_translate("MainWindow", "Search"))
+        self.sortButton.setText(_translate("MainWindow", "Sort by Popularity"))
+        self.sortButtonLH.setText(_translate("MainWindow", "Sort by Price: Low to High"))
+        self.sortButtonHL.setText(_translate("MainWindow", "Sort by Price: High to Low"))
 
     def fetchCollab(self):
         self.search_index_map = {}
+        self.search_list=[]
         collab_results = collab_filter(user_favs)
         self.listWidget.clear()
         i = 0
@@ -116,18 +137,123 @@ class Ui_MainWindow(object):
             if column == 'productId':
                 continue
             ind = int(column)
+            self.search_list.append(ind)
             self.listWidget.addItem(
                 QListWidgetItem(df['product_name'][ind]))
             self.search_index_map[i] = id
             i += 1
+    def clearAllButton(self):
+        self.sortButtonHL.setStyleSheet("")
+        self.sortButtonLH.setStyleSheet("")
+        self.sortButton.setStyleSheet("")
+    def sortHL(self):
+        self.clearAllButton()
+        self.sortButtonHL.setStyleSheet("background-color: green;")
+        self.listWidget.clear()
+        
+        rating_ind=[]
+
+        for i in range(len(self.search_list)):
+            ind = self.search_list[i]
+           
+            rating_ind.append((float(df['discounted_price'][ind].replace(',','').replace('\u20b9','')), ind))
+
+        sorted_rating_ind = sorted(rating_ind, key=lambda x: x[0],reverse=True)
+
+        self.search_index_map = {}
+        self.search_list=[]
+        for ps, ind in sorted_rating_ind:
+            self.search_list.append(ind)
+            name = df['product_name'][ind] + '\n\n' + df['discounted_price'][ind] + '\n\n' + 'Average Rating : ' + str(df['rating'][ind])
+            name = name.replace('\u20b9', 'Rs. ')
+            
+            icon = QIcon('placeholder.png')
+            listWidgetItem = QListWidgetItem(icon, name)
+
+            self.listWidget.addItem(listWidgetItem)
+            self.search_index_map[i] = ind
+            i += 1
+
+    def sortLH(self):
+        self.clearAllButton()
+        self.sortButtonLH.setStyleSheet("background-color: green;")
+        self.listWidget.clear()
+        
+        rating_ind=[]
+
+        for i in range(len(self.search_list)):
+            ind = self.search_list[i]
+           
+            rating_ind.append((float(df['discounted_price'][ind].replace(',','').replace('\u20b9','')), ind))
+
+        sorted_rating_ind = sorted(rating_ind, key=lambda x: x[0])
+
+        self.search_index_map = {}
+        self.search_list=[]
+        for ps, ind in sorted_rating_ind:
+            self.search_list.append(ind)
+            name = df['product_name'][ind] + '\n\n' + df['discounted_price'][ind] + '\n\n' + 'Average Rating : ' + str(df['rating'][ind])
+            name = name.replace('\u20b9', 'Rs. ')
+            
+            icon = QIcon('placeholder.png')
+            listWidgetItem = QListWidgetItem(icon, name)
+
+            self.listWidget.addItem(listWidgetItem)
+            self.search_index_map[i] = ind
+            i += 1
+
+
+    def sortPopularity(self):
+        self.clearAllButton()
+        self.sortButton.setStyleSheet("background-color: green;")
+        self.listWidget.clear()
+        
+        rating_ind=[]
+        w_avg = 0.6
+        w_cnt = 0.4
+        list_ps = []
+        for ind in self.search_list:
+            rating = float(df['rating'][ind])
+            rating_count = float(df['rating_count'][ind].replace(',',''))
+            ps = w_avg*rating + w_cnt*rating_count
+            list_ps.append(ps)
+        print('lol')
+        print(len(list_ps))
+        print(list_ps)
+        max_ps = max(list_ps)
+        for i in range(len(list_ps)):
+            ind = self.search_list[i]
+            ps = list_ps[i]/max_ps
+            rating_ind.append((ps, ind))
+
+        sorted_rating_ind = sorted(rating_ind, key=lambda x: x[0], reverse=True)
+
+        self.search_index_map = {}
+        self.search_list=[]
+        for ps, ind in sorted_rating_ind:
+            self.search_list.append(ind)
+            name = df['product_name'][ind] + '\n\n' + df['discounted_price'][ind] + '\n\n' + 'Average Rating : ' + str(df['rating'][ind])
+            name = name.replace('\u20b9', 'Rs. ')
+            
+            icon = QIcon('placeholder.png')
+            listWidgetItem = QListWidgetItem(icon, name)
+
+            self.listWidget.addItem(listWidgetItem)
+            self.search_index_map[i] = ind
+            i += 1
+
+        
+
+
 
     def searchTermUpdate(self):
         self.searchText = self.textEdit.toPlainText()
         print(self.searchText)
 
     def submitSearch(self):
+        self.clearAllButton()   
         self.search_index_map = {}
-
+        self.search_list=[]
         self.listWidget.clear()
         self.searchResults = searchQuery(self.searchText) #rank, index
         print(self.searchResults)
@@ -137,11 +263,11 @@ class Ui_MainWindow(object):
                 break
             id = int(id)
             ind=int(id)
-            
+            self.search_list.append(ind)
             #id = self.searchResults['index'][ind]
             name = df['product_name'][ind] + '\n\n' + df['discounted_price'][ind] + '\n\n' + 'Average Rating : ' + str(df['rating'][ind])
             name = name.replace('\u20b9', 'Rs. ')
-            print(name)
+            
             icon = QIcon('placeholder.png')
 
             listWidgetItem = QListWidgetItem(icon, name)
@@ -158,6 +284,11 @@ class Ui_MainWindow(object):
             self.selected_product = id
             content_results = content_rec(df['product_name'][id])
             collab_results = collab_filter([(df['product_name'][id], id, 5)])
+            global user_favs
+            #name, id, rating
+            
+            if (df['product_name'][id], id, 5) not in user_favs:
+                user_favs.append([(df['product_name'][id], id, 2)])
 
             self.p_window = ProductWindow()
             self.p_window.setupUi(
@@ -218,13 +349,13 @@ class ProductWindow(QWidget):
         self.label = QtWidgets.QLabel(self.centralwidget)
         self.label.setGeometry(QtCore.QRect(40, 370, 321, 31))
         font = QtGui.QFont()
-        font.setPointSize(13)
+        font.setPointSize(12)
         self.label.setFont(font)
         self.label.setObjectName("label")
         self.label_2 = QtWidgets.QLabel(self.centralwidget)
         self.label_2.setGeometry(QtCore.QRect(430, 370, 321, 31))
         font = QtGui.QFont()
-        font.setPointSize(13)
+        font.setPointSize(12)
         self.label_2.setObjectName("label_2")
         self.label_2.setText('Customers who bought this also bought')
         self.label_2.setFont(font)
@@ -281,8 +412,12 @@ class ProductWindow(QWidget):
         rating = 3
         name = df['product_name'][id]
         tupel = (name, id, rating)
-        if tupel not in user_favs:
+        if tupel not in user_favs and (df['product_name'][id], id, 2) not in user_favs:
             user_favs.append(tupel)
+        elif (df['product_name'][id], id, 2) in user_favs:
+            loc = user_favs.index((df['product_name'][id], id, 2))
+            user_favs[loc]=(df['product_name'][id], id, 3)
+            
 
     def populateContent(self, id):
         # (name, index)
