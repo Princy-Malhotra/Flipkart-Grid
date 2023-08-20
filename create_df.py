@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 
-df = pd.read_csv("amazon.csv")
+df = pd.read_csv("data.csv")
 df['index'] = ''
 i = 0
 for d in range(len(df)):
