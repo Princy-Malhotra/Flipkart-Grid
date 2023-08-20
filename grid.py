@@ -10,7 +10,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import QSize
 import requests
-from searchFunctions import searchQuery
+from pagerank2 import searchQuery
 import content_based
 from content_based import content_rec, df
 from collab_filter import collab_filter
@@ -21,9 +21,27 @@ from PyQt5.QtWidgets import QApplication, QWidget, QListWidget, QVBoxLayout, QLi
 from PyQt5.QtGui import QPixmap, QIcon, QImage
 import urllib
 
+import sys
+from PyQt5.QtWidgets import QApplication, QMainWindow, QListWidget, QListWidgetItem, QStyledItemDelegate, QWidget
+from PyQt5.QtCore import QSize, Qt
+from PyQt5.QtGui import QPen, QPainter
+
 
 user_favs = []
 initial = 1
+
+
+class CustomItemDelegate(QStyledItemDelegate):
+    def paint(self, painter, option, index):
+        # Call the default paint method first
+        super().paint(painter, option, index)
+
+        # Draw a divider after each item
+        if index.row() < index.model().rowCount() - 1:
+            divider_pen = QPen(Qt.lightGray, 1, Qt.SolidLine)
+            painter.setPen(divider_pen)
+            painter.drawLine(option.rect.bottomLeft(),
+                             option.rect.bottomRight())
 
 
 class Ui_MainWindow(object):
@@ -52,9 +70,11 @@ class Ui_MainWindow(object):
         self.listWidget.setGeometry(QtCore.QRect(-5, 1, 761, 471))
         self.listWidget.setObjectName("listWidget")
         self.listWidget.itemDoubleClicked.connect(self.showProduct)
+
         self.listWidget.setWordWrap(True)
-        size = QSize()
-        size.setHeight(100)
+        delegate = CustomItemDelegate()
+        self.listWidget.setItemDelegate(delegate)
+        self.listWidget.setIconSize(QSize(100, 100))
 
         self.resultsScollArea.setWidget(self.scrollAreaWidgetContents)
         global initial
@@ -109,20 +129,21 @@ class Ui_MainWindow(object):
         self.search_index_map = {}
 
         self.listWidget.clear()
-        self.searchResults = searchQuery(self.searchText)
+        self.searchResults = searchQuery(self.searchText) #rank, index
         print(self.searchResults)
         i = 0
-        for ind in self.searchResults.index:
+        for id in self.searchResults:
             if i > 50:
                 break
-            id = self.searchResults['index'][ind]
-            name = self.searchResults['product_name'][ind] + '\n\n' + \
-                self.searchResults['discounted_price'][ind] + \
-                '\n\n' + 'Average Rating : ' + \
-                str(self.searchResults['rating'][ind])
+            id = int(id)
+            ind=int(id)
+            
+            #id = self.searchResults['index'][ind]
+            name = df['product_name'][ind] + '\n\n' + df['discounted_price'][ind] + '\n\n' + 'Average Rating : ' + str(df['rating'][ind])
             name = name.replace('\u20b9', 'Rs. ')
             print(name)
             icon = QIcon('placeholder.png')
+
             listWidgetItem = QListWidgetItem(icon, name)
 
             self.listWidget.addItem(listWidgetItem)
@@ -169,41 +190,68 @@ class ProductWindow(QWidget):
         self.productImageLabel.setGeometry(QtCore.QRect(40, 70, 321, 211))
         self.productImageLabel.setText("")
         self.productImageLabel.setObjectName("productImageLabel")
+        
+        pixmap = QPixmap('placeholder.png')
+        pixmap.scaled(64, 64)
+        self.productImageLabel.setPixmap(pixmap)
 
-        self.productImageLabel.setPixmap(QPixmap('placeholder.png'))
         print('lol')
         print(df['product_name'][id])
         self.productLabel = QtWidgets.QTextBrowser(self.centralwidget)
         self.productLabel.setObjectName(u"productLabel")
-        self.productLabel.setGeometry(QtCore.QRect(400, 50, 371, 251))
+        self.productLabel.setGeometry(QtCore.QRect(400, 70, 371, 210))
+        self.productLabel.setMinimumSize(371, 210)
+        font = QtGui.QFont()
+        font.setPointSize(9)
+        self.productLabel.setFont(font)
+        self.productLabel.setText(df['discounted_price'][id]+'\n\n'+'Average Rating : '+df['rating'][id]+'\n\n'+df['about_product'][id])
 
-        self.productLabel.setText(df['about_product'][id])
-        self.productLabel.adjustSize()
+
         self.productTitle = QtWidgets.QLabel(self.centralwidget)
+        self.productTitle.setGeometry(QtCore.QRect(120, 20, 651, 31))
+        font = QtGui.QFont()
+        font.setPointSize(11)
+        self.productTitle.setFont(font)
         self.productTitle.setObjectName("productTitle")
-        self.productTitle.setGeometry(QtCore.QRect(118, 30, 661, 20))
         self.productTitle.setText(df['product_name'][id])
+
         self.label = QtWidgets.QLabel(self.centralwidget)
-        self.label.setGeometry(QtCore.QRect(30, 300, 49, 16))
+        self.label.setGeometry(QtCore.QRect(40, 370, 321, 31))
+        font = QtGui.QFont()
+        font.setPointSize(13)
+        self.label.setFont(font)
         self.label.setObjectName("label")
-        self.label.setText('Products Similiar to this')
         self.label_2 = QtWidgets.QLabel(self.centralwidget)
-        self.label_2.setGeometry(QtCore.QRect(40, 440, 49, 16))
+        self.label_2.setGeometry(QtCore.QRect(430, 370, 321, 31))
+        font = QtGui.QFont()
+        font.setPointSize(13)
         self.label_2.setObjectName("label_2")
         self.label_2.setText('Customers who bought this also bought')
+        self.label_2.setFont(font)
+
         self.contentBasedList = QtWidgets.QListWidget(self.centralwidget)
-        self.contentBasedList.setGeometry(QtCore.QRect(30, 320, 741, 101))
-        self.contentBasedList.setFlow(QtWidgets.QListView.LeftToRight)
+        self.contentBasedList.setGeometry(QtCore.QRect(40, 400, 321, 171))
+        # self.contentBasedList.setFlow(QtWidgets.QListView.TopToBottom)
         self.contentBasedList.setObjectName("contentBasedList")
+        self.contentBasedList.setWordWrap(True)
+        delegate = CustomItemDelegate()
+        self.contentBasedList.setItemDelegate(delegate)
+        self.contentBasedList.setIconSize(QSize(100, 100))
+
         self.collabBasedList = QtWidgets.QListWidget(self.centralwidget)
-        self.collabBasedList.setGeometry(QtCore.QRect(30, 460, 741, 101))
-        self.collabBasedList.setFlow(QtWidgets.QListView.LeftToRight)
+        self.collabBasedList.setGeometry(QtCore.QRect(430, 400, 321, 171))
+
+        # self.collabBasedList.setFlow(QtWidgets.QListView.TopToBottom)
         self.collabBasedList.setObjectName("collabBasedList")
+        self.collabBasedList.setWordWrap(True)
+        delegate = CustomItemDelegate()
+        self.collabBasedList.setItemDelegate(delegate)
+        self.collabBasedList.setIconSize(QSize(100, 100))
         self.populateContent(id)
         self.populateCollab(id)
         self.buyButton = QtWidgets  .QPushButton(self.centralwidget)
         self.buyButton.setObjectName(u"buyButton")
-        self.buyButton.setGeometry(QtCore.QRect(310, 280, 75, 24))
+        self.buyButton.setGeometry(QtCore.QRect(510, 320, 141, 24))
         self.buyButton.clicked.connect(self.addToFav)
         self.buyButton.setText('Buy')
         MainWindow.setCentralWidget(self.centralwidget)
@@ -219,8 +267,9 @@ class ProductWindow(QWidget):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.backButton.setText(_translate("MainWindow", "Go back"))
         #self.productLabel.setText(_translate("MainWindow", "TextLabel"))
-        self.label.setText(_translate("MainWindow", "TextLabel"))
-        self.label_2.setText(_translate("MainWindow", "TextLabel"))
+        self.label.setText(_translate("MainWindow", "Similiar Products"))
+        self.label_2.setText(_translate(
+            "MainWindow", "Users who bought this also bought"))
 
     def go_back(self):
 
@@ -240,7 +289,10 @@ class ProductWindow(QWidget):
         for name, ind in self.content_results:
             if ind == id:
                 continue
-            self.contentBasedList.addItem(QListWidgetItem(name))
+            icon = QIcon('placeholder.png')
+
+            listWidgetItem = QListWidgetItem(icon, name)
+            self.contentBasedList.addItem(listWidgetItem)
 
     def populateCollab(self, id):
         for column in self.collab_results.columns:
@@ -249,8 +301,10 @@ class ProductWindow(QWidget):
             ind = int(column)
             if ind == id:
                 continue
-            self.collabBasedList.addItem(
-                QListWidgetItem(df['product_name'][ind]))
+            icon = QIcon('placeholder.png')
+            name = df['product_name'][ind]
+            listWidgetItem = QListWidgetItem(icon, name)
+            self.collabBasedList.addItem(listWidgetItem)
 
 
 if __name__ == "__main__":

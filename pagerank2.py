@@ -34,7 +34,7 @@ def create_directed_graph():
 
     for index, row in products.iterrows():
         related_products = products['related_products'].iloc[index]  
-        print(related_products)
+        #print(related_products)
         for related_product_id in related_products:
             if related_product_id in product_id_to_index:
                 G.add_edge(product_id_to_index[row['product_id']], product_id_to_index[related_product_id])
@@ -70,14 +70,21 @@ products['related_products'] = products['product_id'].apply(lambda x: related_pr
 
 G = create_directed_graph()
 
-search_query = "pillow"
+def searchQuery(search_query): 
+    # search_query = "pillow"
 
-sorted_product_indices, final_scores = calc_scores(G, search_query)
+    sorted_product_indices, final_scores = calc_scores(G, search_query)
 
-print("Rank\tProduct ID\tDescription")
-for rank, index in enumerate(sorted_product_indices, start=1):
-    product_id = index_to_product_id[index]
-    product_description = products.loc[products['product_id'] == product_id, 'about_product'].values[0]
-    print(f"{rank}\t{product_id}\t{product_description}")
+    return sorted_product_indices
+    # print("Rank\tProduct ID\tDescription")
+    # for rank, index in enumerate(sorted_product_indices, start=1):
+    #     product_id = index_to_product_id[index]
+    #     product_description = products.loc[products['product_id'] == product_id, 'about_product'].values[0]
+    #     print(f"{rank}\t{product_id}\t{product_description}")
+
+
+# searchQuery('pillow')
+
+
 
 
